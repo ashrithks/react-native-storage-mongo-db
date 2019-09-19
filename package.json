@@ -1,5 +1,5 @@
 {
-  "name": "react-native-local-mongo-db",
+  "name": "react-native-storage-mongo-db",
   "version": "1.0.0",
   "description": "react-native local mongodb storage. Embedded persistent or in memory database for react-native. API is a subset of MongoDB's and it's plenty fast.",
   "main": "index.js",
@@ -40,13 +40,13 @@
     },
     "testEnvironment": "node"
   },
-  "homepage": "https://github.com/antoniopresto/react-native-local-mongodb",
+  "homepage": "https://github.com/ashrithks/react-native-local-mongo-db",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/antoniopresto/react-native-local-mongodb.git"
+    "url": "git+ssh://git@github.com/ashrithks/react-native-local-mongo-db.git"
   },
   "bugs": {
-    "url": "https://github.com/antoniopresto/react-native-local-mongodb/issues"
+    "url": "https://github.com/ashrithks/react-native-local-mongo-db/issues"
   },
   "directories": {
     "test": "test"

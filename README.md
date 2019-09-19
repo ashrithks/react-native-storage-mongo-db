@@ -1,10 +1,12 @@
 **Embedded persistent or in memory database for react-native**. API is a subset of MongoDB's (NeDB).
 
-# react-native-local-mongo-db
+# react-native-storage-mongo-db
 
 ## Getting started
 
-`$ npm install react-native-local-mongo-db --save`
+`$ npm install react-native-storage-mongo-db --save`
+
+
 `$ npm test                   # You'll need the dev dependencies to launch tests`
 
 ## Usage
@@ -28,16 +30,16 @@ It is a subset of MongoDB's (NeDB) API (the most used operations).
 * <a href="#browser-version">Browser version</a>
 
 ### Creating/loading a database
-You can use react-native-local-mongo-db as an in-memory only datastore or as a persistent datastore. One datastore is the equivalent of a MongoDB collection. The constructor is used as follows `new Datastore(options)` where `options` is an object with the following fields:
+You can use react-native-storage-mongo-db as an in-memory only datastore or as a persistent datastore. One datastore is the equivalent of a MongoDB collection. The constructor is used as follows `new Datastore(options)` where `options` is an object with the following fields:
 
 * `filename` (optional): the key where AsyncStorage will save data.
 * `inMemoryOnly` (optional, defaults to `false`): as the name implies.
 * `timestampData` (optional, defaults to `false`): timestamp the insertion and last update of all documents, with the fields `createdAt` and `updatedAt`. User-specified values override automatic generation, usually useful for testing.
 * `autoload` (optional, defaults to `false`): if used, the database will automatically be loaded from the datafile upon creation (you don't need to call `loadDatabase`). Any command issued before load is finished is buffered and will be executed when load is done.
 * `onload` (optional): if you use autoloading, this is the handler called after the `loadDatabase`. It takes one `error` argument. If you use autoloading without specifying this handler, and an error happens during load, an error will be thrown.
-* `afterSerialization` (optional): hook you can use to transform data after it was serialized and before it is written to disk. Can be used for example to encrypt data before writing database to disk. This function takes a string as parameter (one line of an react-native-local-mongo-db data file) and outputs the transformed string, **which must absolutely not contain a `\n` character** (or data will be lost).
-* `beforeDeserialization` (optional): inverse of `afterSerialization`. Make sure to include both and not just one or you risk data loss. For the same reason, make sure both functions are inverses of one another. Some failsafe mechanisms are in place to prevent data loss if you misuse the serialization hooks: react-native-local-mongo-db checks that never one is declared without the other, and checks that they are reverse of one another by testing on random strings of various lengths. In addition, if too much data is detected as corrupt, react-native-local-mongo-db will refuse to start as it could mean you're not using the deserialization hook corresponding to the serialization hook used before (see below).
-* `corruptAlertThreshold` (optional): between 0 and 1, defaults to 10%. react-native-local-mongo-db will refuse to start if more than this percentage of the datafile is corrupt. 0 means you don't tolerate any corruption, 1 means you don't care.
+* `afterSerialization` (optional): hook you can use to transform data after it was serialized and before it is written to disk. Can be used for example to encrypt data before writing database to disk. This function takes a string as parameter (one line of an react-native-storage-mongo-db data file) and outputs the transformed string, **which must absolutely not contain a `\n` character** (or data will be lost).
+* `beforeDeserialization` (optional): inverse of `afterSerialization`. Make sure to include both and not just one or you risk data loss. For the same reason, make sure both functions are inverses of one another. Some failsafe mechanisms are in place to prevent data loss if you misuse the serialization hooks: react-native-storage-mongo-db checks that never one is declared without the other, and checks that they are reverse of one another by testing on random strings of various lengths. In addition, if too much data is detected as corrupt, react-native-storage-mongo-db will refuse to start as it could mean you're not using the deserialization hook corresponding to the serialization hook used before (see below).
+* `corruptAlertThreshold` (optional): between 0 and 1, defaults to 10%. react-native-storage-mongo-db will refuse to start if more than this percentage of the datafile is corrupt. 0 means you don't tolerate any corruption, 1 means you don't care.
 * `compareStrings` (optional): function compareStrings(a, b) compares
   strings a and b and return -1, 0 or 1. If specified, it overrides
 default string comparison which is not well adapted to non-US characters
@@ -53,12 +55,12 @@ Also, if `loadDatabase` fails, all commands registered to the executor afterward
 
 ```javascript
 // Type 1: In-memory only datastore (no need to load the database)
-var Datastore = require('react-native-local-mongo-db')
+var Datastore = require('react-native-storage-mongo-db')
   , db = new Datastore();
 
 
 // Type 2: Persistent datastore with manual loading
-var Datastore = require('react-native-local-mongo-db')
+var Datastore = require('react-native-storage-mongo-db')
   , db = new Datastore({ filename: 'asyncStorageKey' });
 db.loadDatabase(function (err) {    // Callback is optional
   // Now commands will be executed
@@ -66,13 +68,13 @@ db.loadDatabase(function (err) {    // Callback is optional
 
 
 // Type 3: Persistent datastore with automatic loading
-var Datastore = require('react-native-local-mongo-db')
+var Datastore = require('react-native-storage-mongo-db')
   , db = new Datastore({ filename: 'asyncStorageKey', autoload: true });
 // You can issue commands right away
 ```
 
 ### Persistence
-Under the hood, react-native-local-mongo-db's persistence uses an append-only format, meaning that all updates and deletes actually result in lines added at the end of the string in AsyncStorage, for performance reasons. The database is automatically compacted (i.e. put back in the one-line-per-document format) every time you load each database within your application.
+Under the hood, react-native-storage-mongo-db's persistence uses an append-only format, meaning that all updates and deletes actually result in lines added at the end of the string in AsyncStorage, for performance reasons. The database is automatically compacted (i.e. put back in the one-line-per-document format) every time you load each database within your application.
 
 You can manually call the compaction function with `yourDatabase.persistence.compactDatafile` which takes no argument. It queues a compaction of the datafile in the executor, to be executed sequentially after all pending operations. The datastore will fire a `compaction.done` event once compaction is finished.
 
@@ -82,14 +84,14 @@ Keep in mind that compaction takes a bit of time (not too much: 130ms for 50k re
 
 Compaction will also immediately remove any documents whose data line has become corrupted, assuming that the total percentage of all corrupted documents in that database still falls below the specified `corruptAlertThreshold` option's value.
 
-Durability works similarly to major databases: compaction forces the OS to physically flush data to disk, while appends to the data file do not (the OS is responsible for flushing the data). That guarantees that a server crash can never cause complete data loss, while preserving performance. The worst that can happen is a crash between two syncs, causing a loss of all data between the two syncs. Usually syncs are 30 seconds appart so that's at most 30 seconds of data. <a href="http://oldblog.antirez.com/post/redis-persistence-demystified.html" target="_blank">This post by Antirez on Redis persistence</a> explains this in more details, react-native-local-mongo-db being very close to Redis AOF persistence with `appendfsync` option set to `no`.
+Durability works similarly to major databases: compaction forces the OS to physically flush data to disk, while appends to the data file do not (the OS is responsible for flushing the data). That guarantees that a server crash can never cause complete data loss, while preserving performance. The worst that can happen is a crash between two syncs, causing a loss of all data between the two syncs. Usually syncs are 30 seconds appart so that's at most 30 seconds of data. <a href="http://oldblog.antirez.com/post/redis-persistence-demystified.html" target="_blank">This post by Antirez on Redis persistence</a> explains this in more details, react-native-storage-mongo-db being very close to Redis AOF persistence with `appendfsync` option set to `no`.
 
 ### Inserting documents
 The native types are `String`, `Number`, `Boolean`, `Date` and `null`. You can also use
 arrays and subdocuments (objects). If a field is `undefined`, it will not be saved (this is different from
 MongoDB which transforms `undefined` in `null`, something I find counter-intuitive).
 
-If the document does not contain an `_id` field, react-native-local-mongo-db will automatically generate one for you (a 16-characters alphanumerical string). The `_id` of a document, once set, cannot be modified.
+If the document does not contain an `_id` field, react-native-storage-mongo-db will automatically generate one for you (a 16-characters alphanumerical string). The `_id` of a document, once set, cannot be modified.
 
 Field names cannot begin by '$' or contain a '.'.
 
@@ -97,11 +99,11 @@ Field names cannot begin by '$' or contain a '.'.
 var doc = { hello: 'world'
                , n: 5
                , today: new Date()
-               , react-native-local-mongo-dbIsAwesome: true
+               , react-native-storage-mongo-dbIsAwesome: true
                , notthere: null
                , notToBeSaved: undefined  // Will not be saved
                , fruits: [ 'apple', 'orange', 'pear' ]
-               , infos: { name: 'react-native-local-mongo-db' }
+               , infos: { name: 'react-native-storage-mongo-db' }
                };
 
 db.insert(doc, function (err, newDoc) {   // Callback is optional
@@ -236,7 +238,7 @@ db.find({ planet: { $regex: /ar/, $nin: ['Jupiter', 'Earth'] } }, function (err,
 ```
 
 #### Array fields
-When a field in a document is an array, react-native-local-mongo-db first tries to see if the query value is an array to perform an exact match, then whether there is an array-specific comparison function (for now there is only `$size` and `$elemMatch`) being used. If not, the query is treated as a query on every element and there is a match if at least one element matches.
+When a field in a document is an array, react-native-storage-mongo-db first tries to see if the query value is an array to perform an exact match, then whether there is an array-specific comparison function (for now there is only `$size` and `$elemMatch`) being used. If not, the query is treated as a query on every element and there is a match if at least one element matches.
 
 * `$size`: match on the size of the array
 * `$elemMatch`: matches if at least one array element matches the query entirely
@@ -406,7 +408,7 @@ db.count({}, function (err, count) {
   * `multi` (defaults to `false`) which allows the modification of several documents if set to true
   * `upsert` (defaults to `false`) if you want to insert a new document corresponding to the `update` rules if your `query` doesn't match anything. If your `update` is a simple object with no modifiers, it is the inserted document. In the other case, the `query` is stripped from all operator recursively, and the `update` is applied to it.
   * `returnUpdatedDocs` (defaults to `false`, not MongoDB-compatible) if set to true and update is not an upsert, will return the array of documents matched by the find query and updated. Updated documents will be returned even if the update did not actually modify them
-* `callback` (optional) signature: `(err, numAffected, affectedDocuments, upsert)`. **Warning**: the API was changed between v1.7.4 and v1.8. Please refer to the <a href="https://github.com/louischatriot/react-native-local-mongo-db/wiki/Change-log" target="_blank">change log</a> to see the change.
+* `callback` (optional) signature: `(err, numAffected, affectedDocuments, upsert)`. **Warning**: the API was changed between v1.7.4 and v1.8. Please refer to the <a href="https://github.com/louischatriot/react-native-storage-mongo-db/wiki/Change-log" target="_blank">change log</a> to see the change.
   * For an upsert, `affectedDocuments` contains the inserted document and the `upsert` flag is set to `true`.
   * For a standard update with `returnUpdatedDocs` flag set to `false`, `affectedDocuments` is not set.
   * For a standard update with `returnUpdatedDocs` flag set to `true` and `multi` to `false`, `affectedDocuments` is the updated document.
@@ -490,7 +492,7 @@ db.update({ _id: 'id6' }, { $addToSet: { fruits: 'apple' } }, {}, function () {
   // If we had used a fruit not in the array, e.g. 'banana', it would have been added to the array
 });
 
-// $pull removes all values matching a value or even any react-native-local-mongo-db query from the array
+// $pull removes all values matching a value or even any react-native-storage-mongo-db query from the array
 db.update({ _id: 'id6' }, { $pull: { fruits: 'apple' } }, {}, function () {
   // Now the fruits array is ['orange', 'pear']
 });
@@ -555,7 +557,7 @@ db.remove({}, { multi: true }, function (err, numRemoved) {
 ```
 
 ### Indexing
-react-native-local-mongo-db supports indexing. It gives a very nice speed boost and can be used to enforce a unique constraint on a field. You can index any field, including fields in nested documents using the dot notation. For now, indexes are only used to speed up basic queries and queries using `$in`, `$lt`, `$lte`, `$gt` and `$gte`. The indexed values cannot be of type array of object.
+react-native-storage-mongo-db supports indexing. It gives a very nice speed boost and can be used to enforce a unique constraint on a field. You can index any field, including fields in nested documents using the dot notation. For now, indexes are only used to speed up basic queries and queries using `$in`, `$lt`, `$lte`, `$gt` and `$gte`. The indexed values cannot be of type array of object.
 
 To create an index, use `datastore.ensureIndex(options, cb)`, where callback is optional and get passed an error if any (usually a unique constraint that was violated). `ensureIndex` can be called when you want, even after some data was inserted, though it's best to call it at application startup. The options are:
 
@@ -585,9 +587,9 @@ db.ensureIndex({ fieldName: 'somefield', unique: true, sparse: true }, function 
 
 
 // Format of the error message when the unique constraint is not met
-db.insert({ somefield: 'react-native-local-mongo-db' }, function (err) {
+db.insert({ somefield: 'react-native-storage-mongo-db' }, function (err) {
   // err is null
-  db.insert({ somefield: 'react-native-local-mongo-db' }, function (err) {
+  db.insert({ somefield: 'react-native-storage-mongo-db' }, function (err) {
     // err is { errorType: 'uniqueViolated'
     //        , key: 'name'
     //        , message: 'Unique constraint violated for key name' }
