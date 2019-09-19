@@ -40,13 +40,13 @@
     },
     "testEnvironment": "node"
   },
-  "homepage": "https://github.com/ashrithks/react-native-local-mongo-db",
+  "homepage": "https://github.com/ashrithks/react-native-storage-mongo-db",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/ashrithks/react-native-local-mongo-db.git"
+    "url": "git+ssh://git@github.com/ashrithks/react-native-storage-mongo-db.git"
   },
   "bugs": {
-    "url": "https://github.com/ashrithks/react-native-local-mongo-db/issues"
+    "url": "https://github.com/ashrithks/react-native-storage-mongo-db/issues"
   },
   "directories": {
     "test": "test"
